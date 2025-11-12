@@ -42,8 +42,8 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()')),
         sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), onupdate=sa.text('now()')),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+        sa.UniqueConstraint('user_id', 'provider', name='uix_user_provider'),
     )
-    op.create_index('ix_user_api_keys_user_provider', 'user_api_keys', ['user_id', 'provider'], unique=True)
 
     # Create generation_jobs table
     op.create_table(

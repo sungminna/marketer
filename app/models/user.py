@@ -1,7 +1,7 @@
 """User and API key models."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, Boolean, Text
+from sqlalchemy import Column, String, DateTime, ForeignKey, Boolean, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -42,7 +42,7 @@ class UserAPIKey(Base):
     # Relationships
     user = relationship("User", back_populates="api_keys")
 
-    # Unique constraint
+    # Unique constraint on (user_id, provider)
     __table_args__ = (
-        {"schema": None},
+        UniqueConstraint('user_id', 'provider', name='uix_user_provider'),
     )
