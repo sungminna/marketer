@@ -1,0 +1,1 @@
+"""GTM Asset Generator application."""
