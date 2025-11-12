@@ -16,7 +16,7 @@ from app.schemas.image import (
     ImageGenerateResponse,
     JobStatusResponse,
 )
-from app.workers.image_worker import process_image_job_task
+from app.workers.image_worker import process_image_job_background
 
 router = APIRouter(prefix="/api/v1/images", tags=["images"])
 
@@ -71,7 +71,7 @@ async def generate_images(
 
     # Queue background task
     background_tasks.add_task(
-        process_image_job_task,
+        process_image_job_background,
         str(job.id),
         api_key.api_key_encrypted,
     )
@@ -125,7 +125,7 @@ async def edit_image(
 
     # Queue background task
     background_tasks.add_task(
-        process_image_job_task,
+        process_image_job_background,
         str(job.id),
         api_key.api_key_encrypted,
     )
@@ -166,7 +166,7 @@ async def generate_prototype(
         )
 
     # Build enhanced prompt for prototype
-    prompt = self._build_prototype_prompt(request)
+    prompt = _build_prototype_prompt(request)
 
     # Create service
     service = ImageService(db)
@@ -187,7 +187,7 @@ async def generate_prototype(
 
     # Queue background task
     background_tasks.add_task(
-        process_image_job_task,
+        process_image_job_background,
         str(job.id),
         api_key.api_key_encrypted,
     )

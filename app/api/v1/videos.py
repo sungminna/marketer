@@ -15,7 +15,7 @@ from app.schemas.video import (
     VideoGenerateResponse,
 )
 from app.schemas.image import JobStatusResponse
-from app.workers.video_worker import process_video_job_task
+from app.workers.video_worker import process_video_job_background
 
 router = APIRouter(prefix="/api/v1/videos", tags=["videos"])
 
@@ -69,7 +69,7 @@ async def generate_video(
 
     # Queue background task
     background_tasks.add_task(
-        process_video_job_task,
+        process_video_job_background,
         str(job.id),
         api_key.api_key_encrypted,
     )
@@ -137,7 +137,7 @@ async def generate_video_from_images(
 
     # Queue background task
     background_tasks.add_task(
-        process_video_job_task,
+        process_video_job_background,
         str(job.id),
         api_key.api_key_encrypted,
     )
@@ -175,7 +175,7 @@ async def remove_video_background(
 
     # Queue background task
     background_tasks.add_task(
-        process_video_job_task,
+        process_video_job_background,
         str(job.id),
         "",  # No API key needed for this provider
     )
