@@ -11,6 +11,7 @@ from app.services.providers import GeminiProvider, OpenAIProvider, ImagenProvide
 from app.services.cost_calculator import CostCalculator
 from app.services.storage_service import storage_service
 from app.core.security import api_key_manager
+from app.services.webhook_service import webhook_service
 
 
 class ImageService:
@@ -141,6 +142,9 @@ class ImageService:
             # Log usage
             await self._log_usage(job, quantity, cost)
 
+            # Send webhook notification for job completion
+            await self._send_webhook_notification(job, "job.completed")
+
             return job
 
         except Exception as e:
@@ -148,6 +152,10 @@ class ImageService:
             job.status = "failed"
             job.error_message = str(e)
             await self.db.commit()
+
+            # Send webhook notification for job failure
+            await self._send_webhook_notification(job, "job.failed")
+
             raise
 
     async def _log_usage(
@@ -169,6 +177,44 @@ class ImageService:
 
         self.db.add(usage_log)
         await self.db.commit()
+
+    async def _send_webhook_notification(
+        self,
+        job: GenerationJob,
+        event_type: str,
+    ):
+        """Send webhook notification for job event."""
+        try:
+            payload = {
+                "job_id": str(job.id),
+                "job_type": job.job_type,
+                "provider": job.provider,
+                "model": job.model,
+                "status": job.status,
+            }
+
+            if job.status == "completed":
+                payload.update({
+                    "output_urls": job.output_urls,
+                    "cost_usd": float(job.cost_usd) if job.cost_usd else 0,
+                    "completed_at": job.completed_at.isoformat() if job.completed_at else None,
+                })
+            elif job.status == "failed":
+                payload.update({
+                    "error_message": job.error_message,
+                })
+
+            await webhook_service.send_event_to_user_webhooks(
+                self.db,
+                str(job.user_id),
+                event_type,
+                payload
+            )
+        except Exception as e:
+            # Log error but don't fail the job
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send webhook for job {job.id}: {e}")
 
     def _get_provider(self, provider_name: str, api_key: str):
         """Get provider instance."""

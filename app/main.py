@@ -7,7 +7,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.core.database import init_db
-from app.api.v1 import users, images, videos
+from app.api.v1 import users, images, videos, webhooks, batches, templates, teams, analytics
 
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -164,6 +164,11 @@ async def root():
 app.include_router(users.router)
 app.include_router(images.router)
 app.include_router(videos.router)
+app.include_router(webhooks.router)
+app.include_router(batches.router)
+app.include_router(templates.router)
+app.include_router(teams.router)
+app.include_router(analytics.router)
 
 
 # Note: Rate limiting is handled by slowapi decorators on individual endpoints
