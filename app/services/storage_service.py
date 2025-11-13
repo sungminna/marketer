@@ -58,9 +58,14 @@ class StorageService:
             if image_data.startswith('data:'):
                 # Remove data URL prefix
                 image_data = image_data.split(',')[1]
-            image_bytes = base64.b64decode(image_data)
-        else:
+            try:
+                image_bytes = base64.b64decode(image_data)
+            except Exception as e:
+                raise ValueError(f"Invalid base64 image data: {str(e)}")
+        elif isinstance(image_data, bytes):
             image_bytes = image_data
+        else:
+            raise ValueError(f"Unsupported image data type: {type(image_data)}")
 
         # Upload to S3
         try:

@@ -79,8 +79,16 @@ class GeminiProvider(BaseProvider):
 
         # Load base image
         if base_image.startswith("http"):
-            # TODO: Download image from URL
-            raise NotImplementedError("URL download not implemented yet")
+            # Download image from URL
+            import httpx
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(base_image)
+                response.raise_for_status()
+                image_data = response.content
+        elif base_image.startswith("data:"):
+            # Handle data URL format
+            base_image = base_image.split(",")[1]
+            image_data = base64.b64decode(base_image)
         else:
             # Assume base64
             image_data = base64.b64decode(base_image)

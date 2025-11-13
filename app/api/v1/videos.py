@@ -214,6 +214,18 @@ async def list_jobs(
     db: AsyncSession = Depends(get_db),
 ):
     """List user's video generation jobs."""
+    # Validate pagination parameters
+    if limit < 1 or limit > 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Limit must be between 1 and 100",
+        )
+    if offset < 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Offset must be non-negative",
+        )
+
     service = VideoService(db)
     jobs = await service.list_jobs(current_user.id, limit, offset)
 
