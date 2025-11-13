@@ -28,6 +28,7 @@ B2B SaaS platform for generating marketing and design assets using AI. Generate 
 ## Tech Stack
 
 - **Backend**: FastAPI + Python 3.11
+- **Package Manager**: uv (fast Python package installer)
 - **Database**: PostgreSQL 15
 - **Cache/Queue**: Redis 7
 - **Task Queue**: Celery
@@ -96,7 +97,9 @@ docker-compose up -d
 
 6. Run database migrations:
 ```bash
-docker-compose exec api alembic upgrade head
+make migrate
+# Or directly:
+docker-compose exec api uv run alembic upgrade head
 ```
 
 7. Access the services:
@@ -240,40 +243,62 @@ Full API documentation is available at:
 
 ## Development
 
+### Local Development (without Docker)
+
+Install dependencies using uv:
+```bash
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies
+uv sync
+
+# Run development server
+uv run uvicorn app.main:app --reload
+```
+
 ### Run Tests
 
 ```bash
-docker-compose exec api pytest
+make test
+# Or directly:
+docker-compose exec api uv run pytest
 ```
 
 ### Database Migrations
 
 Create new migration:
 ```bash
-docker-compose exec api alembic revision --autogenerate -m "description"
+docker-compose exec api uv run alembic revision --autogenerate -m "description"
 ```
 
 Apply migrations:
 ```bash
-docker-compose exec api alembic upgrade head
+make migrate
+# Or directly:
+docker-compose exec api uv run alembic upgrade head
 ```
 
 Rollback:
 ```bash
-docker-compose exec api alembic downgrade -1
+docker-compose exec api uv run alembic downgrade -1
 ```
 
 ### Code Quality
 
 ```bash
 # Format code
-docker-compose exec api black app/
+make format
+# Or directly:
+docker-compose exec api uv run black app/
 
 # Lint
-docker-compose exec api flake8 app/
+make lint
+# Or directly:
+docker-compose exec api uv run flake8 app/
 
 # Type checking
-docker-compose exec api mypy app/
+docker-compose exec api uv run mypy app/
 ```
 
 ## Deployment

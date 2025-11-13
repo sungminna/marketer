@@ -15,7 +15,7 @@ help:
 	@echo "lint        - Run linters"
 
 install:
-	pip install -r requirements.txt
+	uv sync
 
 dev:
 	docker-compose up -d
@@ -33,21 +33,21 @@ logs:
 	docker-compose logs -f
 
 test:
-	docker-compose exec api pytest
+	docker-compose exec api uv run pytest
 
 clean:
 	docker-compose down -v
-	rm -rf __pycache__ .pytest_cache .coverage htmlcov
+	rm -rf __pycache__ .pytest_cache .coverage htmlcov .venv
 
 migrate:
-	docker-compose exec api alembic upgrade head
+	docker-compose exec api uv run alembic upgrade head
 
 format:
-	docker-compose exec api black app/
+	docker-compose exec api uv run black app/
 
 lint:
-	docker-compose exec api flake8 app/
-	docker-compose exec api mypy app/
+	docker-compose exec api uv run flake8 app/
+	docker-compose exec api uv run mypy app/
 
 shell:
 	docker-compose exec api bash
