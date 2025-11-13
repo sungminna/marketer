@@ -31,11 +31,13 @@ services:
       - DATABASE_URL=postgresql+asyncpg://gtmuser:gtmpassword@db:5432/gtm_assets
       - REDIS_URL=redis://redis:6379/0
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - AWS_ACCESS_KEY_ID=minioadmin
       - AWS_SECRET_ACCESS_KEY=minioadmin123
       - S3_BUCKET_NAME=gtm-assets
       - S3_ENDPOINT_URL=http://minio:9000
       - S3_REGION=us-east-1
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
     depends_on:
       - db
       - redis
@@ -50,8 +52,18 @@ services:
     ports:
       - "5555:5555"
     environment:
+      - DATABASE_URL=postgresql+asyncpg://gtmuser:gtmpassword@db:5432/gtm_assets
       - REDIS_URL=redis://redis:6379/0
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin123
+      - S3_BUCKET_NAME=gtm-assets
+      - S3_ENDPOINT_URL=http://minio:9000
+      - S3_REGION=us-east-1
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
     depends_on:
+      - db
       - redis
       - worker
     command: uv run celery -A app.workers.celery_app flower --port=5555
