@@ -22,7 +22,7 @@ services:
       - minio
     volumes:
       - ./app:/app/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     restart: unless-stopped
 
   worker:
@@ -42,7 +42,7 @@ services:
       - minio
     volumes:
       - ./app:/app/app
-    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=4
+    command: uv run celery -A app.workers.celery_app worker --loglevel=info --concurrency=4
     restart: unless-stopped
 
   flower:
@@ -54,7 +54,7 @@ services:
     depends_on:
       - redis
       - worker
-    command: celery -A app.workers.celery_app flower --port=5555
+    command: uv run celery -A app.workers.celery_app flower --port=5555
     restart: unless-stopped
 
   db:
