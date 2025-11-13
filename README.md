@@ -31,7 +31,7 @@ B2B SaaS platform for generating marketing and design assets using AI. Generate 
 - **Database**: PostgreSQL 15
 - **Cache/Queue**: Redis 7
 - **Task Queue**: Celery
-- **Storage**: AWS S3
+- **Storage**: MinIO (local) / AWS S3 (production)
 - **Container**: Docker + Docker Compose
 - **Deployment**: AWS ECS/Fargate (recommended)
 
@@ -40,10 +40,11 @@ B2B SaaS platform for generating marketing and design assets using AI. Generate 
 ### Prerequisites
 
 - Docker and Docker Compose
-- AWS Account (for S3 storage)
-- API keys for providers:
+- API keys for providers (required for generation):
   - Google AI (Gemini/Imagen/Veo)
   - OpenAI (GPT Image/Sora)
+
+**Note**: For local development, MinIO is used for storage (no AWS account needed). For production, configure AWS S3.
 
 ### Installation
 
@@ -67,11 +68,19 @@ DATABASE_URL=postgresql+asyncpg://gtmuser:gtmpassword@db:5432/gtm_assets
 ENCRYPTION_KEY=<generate-32-byte-base64-key>
 JWT_SECRET_KEY=<generate-secure-random-key>
 
-# AWS S3
-AWS_ACCESS_KEY_ID=<your-aws-key>
-AWS_SECRET_ACCESS_KEY=<your-aws-secret>
-S3_BUCKET_NAME=<your-s3-bucket>
+# MinIO Storage (local development - uses Docker defaults)
+AWS_ACCESS_KEY_ID=minioadmin
+AWS_SECRET_ACCESS_KEY=minioadmin123
+S3_BUCKET_NAME=gtm-assets
+S3_ENDPOINT_URL=http://minio:9000
 S3_REGION=us-east-1
+
+# For production with AWS S3, set:
+# AWS_ACCESS_KEY_ID=<your-aws-key>
+# AWS_SECRET_ACCESS_KEY=<your-aws-secret>
+# S3_BUCKET_NAME=<your-s3-bucket>
+# S3_ENDPOINT_URL=  # Leave empty for AWS S3
+# S3_REGION=us-east-1
 ```
 
 4. Generate encryption key:
@@ -90,10 +99,11 @@ docker-compose up -d
 docker-compose exec api alembic upgrade head
 ```
 
-7. Access the API:
+7. Access the services:
 - API: http://localhost:8000
-- Docs: http://localhost:8000/docs
+- API Docs: http://localhost:8000/docs
 - Flower (Celery monitoring): http://localhost:5555
+- MinIO Console: http://localhost:9001 (login: minioadmin / minioadmin123)
 
 ## Usage
 
@@ -211,7 +221,7 @@ Full API documentation is available at:
                            │           ├────▶ Veo API
                            │           └────▶ Sora API
                            │
-                           └────▶ AWS S3 (Storage)
+                           └────▶ MinIO/S3 (Storage)
 ```
 
 ## Cost Estimation
@@ -353,11 +363,28 @@ docker-compose restart worker
 docker-compose exec api redis-cli -h redis ping
 ```
 
-### S3 Upload Failures
+### Storage Upload Failures
 
+**MinIO (local development):**
+```bash
+# Check MinIO container status
+docker-compose ps minio
+
+# View MinIO logs
+docker-compose logs minio
+
+# Access MinIO console
+# http://localhost:9001 (minioadmin / minioadmin123)
+
+# Verify bucket exists
+docker-compose exec api python -c "from app.services.storage_service import storage_service; print(storage_service.s3_client.list_buckets())"
+```
+
+**AWS S3 (production):**
 - Verify AWS credentials in `.env`
 - Check S3 bucket permissions
 - Ensure bucket exists in specified region
+- Verify IAM role has PutObject and GetObject permissions
 
 ## Contributing
 

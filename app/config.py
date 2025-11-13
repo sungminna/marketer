@@ -27,10 +27,11 @@ class Settings(BaseSettings):
     jwt_algorithm: str = Field(default="HS256")
     jwt_expire_minutes: int = Field(default=1440)
 
-    # AWS S3
+    # S3 / MinIO Configuration
     aws_access_key_id: str = Field(...)
     aws_secret_access_key: str = Field(...)
     s3_bucket_name: str = Field(...)
+    s3_endpoint_url: str = Field(default="")  # For MinIO: http://localhost:9000, for AWS S3: leave empty
     s3_region: str = Field(default="us-east-1")
 
     # Rate Limiting

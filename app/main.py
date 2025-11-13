@@ -51,8 +51,49 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Startup event
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database on startup."""
+    """Initialize database and storage on startup."""
     await init_db()
+
+    # Initialize MinIO bucket if using MinIO
+    if settings.s3_endpoint_url:
+        try:
+            from app.services.storage_service import storage_service
+            import boto3
+            from botocore.exceptions import ClientError
+
+            # Check if bucket exists, create if not
+            try:
+                storage_service.s3_client.head_bucket(Bucket=settings.s3_bucket_name)
+                print(f"✓ Bucket '{settings.s3_bucket_name}' already exists")
+            except ClientError as e:
+                error_code = e.response['Error']['Code']
+                if error_code == '404':
+                    # Create bucket
+                    storage_service.s3_client.create_bucket(Bucket=settings.s3_bucket_name)
+                    print(f"✓ Created bucket '{settings.s3_bucket_name}'")
+
+                    # Set bucket policy for public read
+                    policy = f'''{{
+    "Version": "2012-10-17",
+    "Statement": [
+        {{
+            "Effect": "Allow",
+            "Principal": {{"AWS": "*"}},
+            "Action": ["s3:GetObject"],
+            "Resource": ["arn:aws:s3:::{settings.s3_bucket_name}/*"]
+        }}
+    ]
+}}'''
+                    try:
+                        storage_service.s3_client.put_bucket_policy(
+                            Bucket=settings.s3_bucket_name,
+                            Policy=policy
+                        )
+                        print(f"✓ Set public read policy on bucket '{settings.s3_bucket_name}'")
+                    except ClientError:
+                        print(f"⚠ Warning: Could not set bucket policy (continuing anyway)")
+        except Exception as e:
+            print(f"⚠ Warning: MinIO initialization failed: {e}")
 
 
 # Health check endpoint

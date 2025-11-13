@@ -13,14 +13,21 @@ class StorageService:
     """Service for storing generated assets in S3."""
 
     def __init__(self):
-        """Initialize S3 client."""
-        self.s3_client = boto3.client(
-            's3',
-            aws_access_key_id=settings.aws_access_key_id,
-            aws_secret_access_key=settings.aws_secret_access_key,
-            region_name=settings.s3_region,
-        )
+        """Initialize S3/MinIO client."""
+        # Configure S3 client with MinIO support
+        s3_config = {
+            'aws_access_key_id': settings.aws_access_key_id,
+            'aws_secret_access_key': settings.aws_secret_access_key,
+            'region_name': settings.s3_region,
+        }
+
+        # Add endpoint_url for MinIO (if configured)
+        if settings.s3_endpoint_url:
+            s3_config['endpoint_url'] = settings.s3_endpoint_url
+
+        self.s3_client = boto3.client('s3', **s3_config)
         self.bucket_name = settings.s3_bucket_name
+        self.endpoint_url = settings.s3_endpoint_url
 
     async def upload_image(
         self,
@@ -65,11 +72,11 @@ class StorageService:
             )
 
             # Generate URL
-            url = f"https://{self.bucket_name}.s3.{settings.s3_region}.amazonaws.com/{key}"
+            url = self._generate_url(key)
             return url
 
         except ClientError as e:
-            raise Exception(f"Failed to upload image to S3: {str(e)}")
+            raise Exception(f"Failed to upload image to S3/MinIO: {str(e)}")
 
     async def upload_video(
         self,
@@ -105,11 +112,11 @@ class StorageService:
             )
 
             # Generate URL
-            url = f"https://{self.bucket_name}.s3.{settings.s3_region}.amazonaws.com/{key}"
+            url = self._generate_url(key)
             return url
 
         except ClientError as e:
-            raise Exception(f"Failed to upload video to S3: {str(e)}")
+            raise Exception(f"Failed to upload video to S3/MinIO: {str(e)}")
 
     async def upload_multiple_images(
         self,
@@ -155,17 +162,22 @@ class StorageService:
 
     async def delete_file(self, url: str) -> bool:
         """
-        Delete file from S3.
+        Delete file from S3/MinIO.
 
         Args:
-            url: S3 URL of file to delete
+            url: S3/MinIO URL of file to delete
 
         Returns:
             True if successful
         """
         try:
             # Extract key from URL
-            key = url.split(f"{self.bucket_name}.s3.{settings.s3_region}.amazonaws.com/")[1]
+            if self.endpoint_url and self.endpoint_url in url:
+                # MinIO URL format: http://minio:9000/bucket-name/key
+                key = url.split(f"{self.bucket_name}/", 1)[1]
+            else:
+                # AWS S3 URL format: https://bucket-name.s3.region.amazonaws.com/key
+                key = url.split(f"{self.bucket_name}.s3.{settings.s3_region}.amazonaws.com/")[1]
 
             self.s3_client.delete_object(
                 Bucket=self.bucket_name,
@@ -174,7 +186,24 @@ class StorageService:
             return True
 
         except (ClientError, IndexError) as e:
-            raise Exception(f"Failed to delete file from S3: {str(e)}")
+            raise Exception(f"Failed to delete file from S3/MinIO: {str(e)}")
+
+    def _generate_url(self, key: str) -> str:
+        """
+        Generate URL for uploaded file (MinIO or AWS S3).
+
+        Args:
+            key: S3/MinIO object key
+
+        Returns:
+            Public URL for the file
+        """
+        if self.endpoint_url:
+            # MinIO URL format
+            return f"{self.endpoint_url}/{self.bucket_name}/{key}"
+        else:
+            # AWS S3 URL format
+            return f"https://{self.bucket_name}.s3.{settings.s3_region}.amazonaws.com/{key}"
 
     def get_signed_url(self, key: str, expiration: int = 3600) -> str:
         """
