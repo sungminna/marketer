@@ -117,7 +117,7 @@ class VideoService:
             job.completed_at = datetime.utcnow()
 
             # Extract metadata
-            job.metadata = {
+            job.job_metadata = {
                 "duration_seconds": duration,
                 "resolution": resolution,
                 "aspect_ratio": job.input_params.get("aspect_ratio", "16:9"),
