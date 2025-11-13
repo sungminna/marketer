@@ -52,7 +52,7 @@ async def generate_video(
     service = VideoService(db)
 
     # Prepare input params
-    input_params = request.dict()
+    input_params = request.model_dump()
     input_params["resource_type"] = "video"
 
     # Create job
@@ -120,7 +120,7 @@ async def generate_video_from_images(
     service = VideoService(db)
 
     # Prepare input params
-    input_params = request.dict()
+    input_params = request.model_dump()
     input_params["resource_type"] = "video"
 
     # Create job
@@ -170,7 +170,7 @@ async def remove_video_background(
         job_type="video_bg_remove",
         provider="external",
         model="videobgremover",
-        input_params=request.dict(),
+        input_params=request.model_dump(),
     )
 
     # Queue background task
@@ -214,6 +214,18 @@ async def list_jobs(
     db: AsyncSession = Depends(get_db),
 ):
     """List user's video generation jobs."""
+    # Validate pagination parameters
+    if limit < 1 or limit > 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Limit must be between 1 and 100",
+        )
+    if offset < 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Offset must be non-negative",
+        )
+
     service = VideoService(db)
     jobs = await service.list_jobs(current_user.id, limit, offset)
 

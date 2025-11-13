@@ -27,11 +27,15 @@ Base = declarative_base()
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Get database session."""
+    """
+    Get database session.
+
+    Note: Commits are handled explicitly by service layer.
+    This dependency only manages session lifecycle and rollback on errors.
+    """
     async with AsyncSessionLocal() as session:
         try:
             yield session
-            await session.commit()
         except Exception:
             await session.rollback()
             raise

@@ -54,7 +54,7 @@ async def generate_images(
     service = ImageService(db)
 
     # Prepare input params
-    input_params = request.dict()
+    input_params = request.model_dump()
     input_params["resource_type"] = "image"
 
     # Create job
@@ -114,14 +114,21 @@ async def edit_image(
     # Create service
     service = ImageService(db)
 
+    # Prepare input params
+    input_params = request.model_dump()
+    input_params["resource_type"] = "image"
+
     # Create job
     job = await service.create_job(
         user_id=current_user.id,
         job_type="image_edit",
         provider=request.provider,
         model="default",  # Model determined by provider
-        input_params=request.dict(),
+        input_params=input_params,
     )
+
+    # Estimate cost
+    estimated_cost = service.estimate_cost(input_params)
 
     # Queue background task
     background_tasks.add_task(
@@ -133,7 +140,7 @@ async def edit_image(
     return {
         "job_id": job.id,
         "status": "pending",
-        "estimated_cost_usd": 0.05,  # Rough estimate
+        "estimated_cost_usd": estimated_cost,
     }
 
 
@@ -172,7 +179,7 @@ async def generate_prototype(
     service = ImageService(db)
 
     # Prepare input params
-    input_params = request.dict()
+    input_params = request.model_dump()
     input_params["prompt"] = prompt
     input_params["resource_type"] = "image"
 
@@ -185,6 +192,9 @@ async def generate_prototype(
         input_params=input_params,
     )
 
+    # Estimate cost
+    estimated_cost = service.estimate_cost(input_params)
+
     # Queue background task
     background_tasks.add_task(
         process_image_job_background,
@@ -195,7 +205,7 @@ async def generate_prototype(
     return {
         "job_id": job.id,
         "status": "pending",
-        "estimated_cost_usd": 0.04,
+        "estimated_cost_usd": estimated_cost,
     }
 
 
@@ -226,6 +236,18 @@ async def list_jobs(
     db: AsyncSession = Depends(get_db),
 ):
     """List user's image generation jobs."""
+    # Validate pagination parameters
+    if limit < 1 or limit > 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Limit must be between 1 and 100",
+        )
+    if offset < 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Offset must be non-negative",
+        )
+
     service = ImageService(db)
     jobs = await service.list_jobs(current_user.id, limit, offset)
 

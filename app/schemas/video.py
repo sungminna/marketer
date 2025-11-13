@@ -1,5 +1,5 @@
 """Video generation-related Pydantic schemas."""
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, Field
@@ -35,9 +35,9 @@ class BrandElements(BaseModel):
 class VideoGenerateRequest(BaseModel):
     """Request schema for text-to-video generation."""
 
-    provider: str = Field(..., description="veo|sora")
+    provider: Literal["veo", "sora", "openai"] = Field(..., description="Provider for video generation")
     model: str = Field(..., description="Model identifier")
-    prompt: str = Field(..., min_length=1, description="Text prompt for video generation")
+    prompt: str = Field(..., min_length=1, max_length=2000, description="Text prompt for video generation")
     video_config: VideoConfig = Field(default_factory=VideoConfig)
     cinematography: Optional[Cinematography] = None
     brand_elements: Optional[BrandElements] = None
@@ -53,11 +53,11 @@ class InputImage(BaseModel):
 class VideoFromImageRequest(BaseModel):
     """Request schema for image-to-video generation."""
 
-    provider: str = Field(..., description="veo|sora")
+    provider: Literal["veo", "sora", "openai"] = Field(..., description="Provider for video generation")
     model: str = Field(..., description="Model identifier")
-    input_images: List[InputImage] = Field(..., max_items=3, description="Reference images (max 3)")
-    transition_style: Optional[str] = Field("fade", description="fade|dissolve|cut|morph")
-    motion_type: Optional[str] = Field("camera_pan", description="camera_pan|zoom_in|object_motion|parallax")
+    input_images: List[InputImage] = Field(..., max_length=3, description="Reference images (max 3)")
+    transition_style: Optional[Literal["fade", "dissolve", "cut", "morph"]] = Field("fade", description="Transition style")
+    motion_type: Optional[Literal["camera_pan", "zoom_in", "object_motion", "parallax"]] = Field("camera_pan", description="Motion type")
     video_config: VideoConfig = Field(default_factory=VideoConfig)
 
 
