@@ -20,10 +20,17 @@ B2B SaaS platform for generating marketing and design assets using AI. Generate 
 - Multi-provider support with automatic cost optimization
 - Design tokens and brand guidelines
 - Asynchronous job processing with Celery
-- S3 storage for generated assets
+- S3 storage for generated assets with CDN integration
 - Usage tracking and cost calculation
 - Rate limiting and security
 - RESTful API with OpenAPI documentation
+- Webhook notifications for job events
+- Batch processing for multiple jobs
+- Template management for reusable configurations
+- Team collaboration with role-based access
+- Advanced analytics and reporting
+- API usage quotas by plan tier
+- Multi-region support
 
 ## Tech Stack
 
@@ -206,6 +213,26 @@ curl -X POST http://localhost:8000/api/v1/videos/generate \
 Full API documentation is available at:
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
+
+### API Endpoints
+
+#### Core Features
+- **Users**: `/api/v1/users` - User registration, authentication, API key management
+- **Images**: `/api/v1/images` - Image generation and editing
+- **Videos**: `/api/v1/videos` - Video generation and processing
+
+#### Phase 2 Features
+- **Webhooks**: `/api/v1/webhooks` - Webhook management and delivery logs
+- **Batches**: `/api/v1/batches` - Batch job processing
+- **Templates**: `/api/v1/templates` - Template CRUD and usage
+- **Teams**: `/api/v1/teams` - Team collaboration and invitations
+
+#### Phase 3 Features
+- **Analytics**: `/api/v1/analytics` - Usage analytics and reporting
+  - GET `/summary` - Usage summary
+  - GET `/cost-breakdown` - Cost breakdown by provider
+  - GET `/daily` - Daily statistics
+  - GET `/quota` - Current quota usage
 
 ## Architecture
 
@@ -431,24 +458,31 @@ For issues and questions:
 
 ## Roadmap
 
-### Phase 1 (Current)
+### Phase 1 ✅ Complete
 - ✅ Image generation (Gemini, OpenAI, Imagen)
 - ✅ Video generation (Veo, Sora)
 - ✅ User management and authentication
 - ✅ Cost tracking and usage logs
 
-### Phase 2 (Planned)
-- [ ] Webhook notifications
-- [ ] Batch processing
-- [ ] Template management
-- [ ] Team collaboration features
+### Phase 2 ✅ Complete
+- ✅ Webhook notifications
+- ✅ Batch processing
+- ✅ Template management
+- ✅ Team collaboration features
 
-### Phase 3 (Future)
-- [ ] Dashboard UI
-- [ ] Advanced analytics
-- [ ] API usage quotas
-- [ ] Multi-region support
-- [ ] CDN integration
+### Phase 3 ✅ Complete
+- ✅ Advanced analytics
+- ✅ API usage quotas
+- ✅ Multi-region support
+- ✅ CDN integration
+- 🔨 Dashboard UI (configuration ready)
+
+### Future Enhancements
+- [ ] Real-time collaboration
+- [ ] AI-powered template suggestions
+- [ ] Custom model fine-tuning
+- [ ] Advanced workflow automation
+- [ ] Enterprise SSO integration
 
 ## Credits
 

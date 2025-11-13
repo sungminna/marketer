@@ -53,6 +53,20 @@ class Settings(BaseSettings):
     # Video Background Removal
     video_bg_remover_api_key: str = Field(default="")
 
+    # Multi-region support
+    region: str = Field(default="us-east-1")
+    enable_multi_region: bool = Field(default=False)
+    regions: List[str] = Field(default=["us-east-1", "us-west-2", "eu-west-1"])
+
+    # CDN Configuration
+    cdn_enabled: bool = Field(default=False)
+    cdn_domain: str = Field(default="")
+    cloudfront_distribution_id: str = Field(default="")
+
+    # Dashboard UI
+    dashboard_enabled: bool = Field(default=True)
+    dashboard_url: str = Field(default="http://localhost:3000")
+
     class Config:
         env_file = ".env"
         case_sensitive = False

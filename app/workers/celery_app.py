@@ -10,6 +10,7 @@ celery_app = Celery(
     include=[
         "app.workers.image_worker",
         "app.workers.video_worker",
+        "app.workers.batch_worker",
     ],
 )
 

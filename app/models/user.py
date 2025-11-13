@@ -24,6 +24,14 @@ class User(Base):
     api_keys = relationship("UserAPIKey", back_populates="user", cascade="all, delete-orphan")
     jobs = relationship("GenerationJob", back_populates="user", cascade="all, delete-orphan")
     usage_logs = relationship("UsageLog", back_populates="user", cascade="all, delete-orphan")
+    webhooks = relationship("Webhook", back_populates="user", cascade="all, delete-orphan")
+    templates = relationship("Template", back_populates="user", cascade="all, delete-orphan")
+    team_memberships = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
+    owned_teams = relationship("Team", back_populates="owner", cascade="all, delete-orphan")
+    batch_jobs = relationship("BatchJob", back_populates="user", cascade="all, delete-orphan")
+    analytics = relationship("DailyAnalytics", back_populates="user", cascade="all, delete-orphan")
+    quota = relationship("UserQuota", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    quota_usage = relationship("QuotaUsage", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserAPIKey(Base):
