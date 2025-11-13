@@ -39,11 +39,27 @@ app.add_middleware(
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Handle all uncaught exceptions."""
+    import logging
+    import traceback
+
+    logger = logging.getLogger(__name__)
+
+    # Log full error details server-side
+    logger.error(
+        f"Unhandled exception: {exc}",
+        extra={
+            "path": request.url.path,
+            "method": request.method,
+            "traceback": traceback.format_exc(),
+        }
+    )
+
+    # Return safe error message to client
     return JSONResponse(
         status_code=500,
         content={
             "detail": "Internal server error",
-            "error": str(exc) if settings.debug else None,
+            "error": str(exc) if settings.debug else "An unexpected error occurred",
         },
     )
 
@@ -100,12 +116,37 @@ async def startup_event():
 @app.get("/health")
 @limiter.limit("100/minute")
 async def health_check(request: Request):
-    """Health check endpoint."""
-    return {
+    """Health check endpoint with dependency verification."""
+    from app.core.database import engine
+    import redis.asyncio as redis_async
+
+    health_status = {
         "status": "healthy",
         "app": settings.app_name,
         "version": settings.app_version,
+        "checks": {}
     }
+
+    # Check database connection
+    try:
+        async with engine.connect() as conn:
+            await conn.execute("SELECT 1")
+        health_status["checks"]["database"] = "healthy"
+    except Exception as e:
+        health_status["checks"]["database"] = f"unhealthy: {str(e)}"
+        health_status["status"] = "degraded"
+
+    # Check Redis connection
+    try:
+        redis_client = redis_async.from_url(settings.redis_url, decode_responses=True)
+        await redis_client.ping()
+        await redis_client.close()
+        health_status["checks"]["redis"] = "healthy"
+    except Exception as e:
+        health_status["checks"]["redis"] = f"unhealthy: {str(e)}"
+        health_status["status"] = "degraded"
+
+    return health_status
 
 
 # Root endpoint
@@ -125,26 +166,8 @@ app.include_router(images.router)
 app.include_router(videos.router)
 
 
-# Rate-limited endpoints with custom limits
-@app.middleware("http")
-async def rate_limit_middleware(request: Request, call_next):
-    """Apply rate limiting to all endpoints."""
-    try:
-        # Apply stricter limits for generation endpoints
-        if request.url.path.startswith("/api/v1/images/generate") or \
-           request.url.path.startswith("/api/v1/videos/generate"):
-            # Limit generation requests
-            # This is handled by slowapi limiter
-            pass
-
-        response = await call_next(request)
-        return response
-
-    except RateLimitExceeded:
-        return JSONResponse(
-            status_code=429,
-            content={"detail": "Rate limit exceeded. Please try again later."},
-        )
+# Note: Rate limiting is handled by slowapi decorators on individual endpoints
+# No additional middleware needed
 
 
 if __name__ == "__main__":
