@@ -1,6 +1,8 @@
 """Security utilities for authentication and encryption."""
 from datetime import datetime, timedelta
 from typing import Optional
+import base64
+import hashlib
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from cryptography.fernet import Fernet
@@ -50,7 +52,12 @@ class APIKeyManager:
 
     def __init__(self):
         """Initialize the cipher with the encryption key."""
-        self.cipher = Fernet(settings.encryption_key.encode())
+        # Derive a valid Fernet key from the encryption key
+        # Use SHA256 to hash the key to ensure it's 32 bytes, then base64 encode it
+        key_bytes = settings.encryption_key.encode()
+        hashed_key = hashlib.sha256(key_bytes).digest()
+        fernet_key = base64.urlsafe_b64encode(hashed_key)
+        self.cipher = Fernet(fernet_key)
 
     def encrypt_key(self, api_key: str) -> str:
         """Encrypt an API key."""

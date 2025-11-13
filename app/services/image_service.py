@@ -130,7 +130,7 @@ class ImageService:
             job.completed_at = datetime.utcnow()
 
             # Extract metadata
-            job.metadata = {
+            job.job_metadata = {
                 "number_of_images": len(urls),
                 "format": "png",
                 "generated_at": job.completed_at.isoformat(),

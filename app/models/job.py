@@ -22,7 +22,7 @@ class GenerationJob(Base):
     output_urls = Column(ARRAY(Text), default=[])
     cost_usd = Column(DECIMAL(10, 4), nullable=True)
     error_message = Column(Text, nullable=True)
-    metadata = Column(JSONB, default={})
+    job_metadata = Column(JSONB, default={})
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     completed_at = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

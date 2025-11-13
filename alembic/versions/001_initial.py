@@ -58,7 +58,7 @@ def upgrade() -> None:
         sa.Column('output_urls', postgresql.ARRAY(sa.Text()), server_default='{}'),
         sa.Column('cost_usd', sa.DECIMAL(10, 4), nullable=True),
         sa.Column('error_message', sa.Text(), nullable=True),
-        sa.Column('metadata', postgresql.JSONB(), server_default='{}'),
+        sa.Column('job_metadata', postgresql.JSONB(), server_default='{}'),
         sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
         sa.Column('completed_at', sa.DateTime(), nullable=True),
         sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), onupdate=sa.text('now()')),
