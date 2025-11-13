@@ -1,0 +1,46 @@
+[project]
+name = "marketer"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp>=3.13.2",
+    "alembic>=1.17.1",
+    "anthropic>=0.72.1",
+    "asyncpg>=0.30.0",
+    "boto3>=1.40.72",
+    "celery>=5.5.3",
+    "cryptography>=46.0.3",
+    "email-validator>=2.3.0",
+    "fastapi>=0.121.1",
+    "flower>=2.0.1",
+    "google-cloud-aiplatform>=1.127.0",
+    "google-generativeai>=0.8.5",
+    "httpx>=0.28.1",
+    "openai>=2.7.2",
+    "passlib[bcrypt]>=1.7.4",
+    "pillow>=12.0.0",
+    "psycopg2-binary>=2.9.11",
+    "pydantic-settings>=2.12.0",
+    "pyjwt>=2.10.1",
+    "python-jose[cryptography]>=3.5.0",
+    "python-magic>=0.4.27",
+    "python-multipart>=0.0.20",
+    "redis>=7.0.1",
+    "slowapi>=0.1.9",
+    "sqlalchemy>=2.0.44",
+    "structlog>=25.5.0",
+    "uvicorn[standard]>=0.38.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.11.0",
+    "flake8>=7.3.0",
+    "mypy>=1.18.2",
+    "pytest>=9.0.1",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.0.0",
+    "types-boto3>=1.40.72",
+    "types-redis>=4.6.0.20241004",
+]
