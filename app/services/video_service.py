@@ -62,11 +62,20 @@ class VideoService:
             job.status = "processing"
             await self.db.commit()
 
-            # Decrypt API key
-            decrypted_key = api_key_manager.decrypt_key(user_api_key)
+            # Validate and decrypt API key (skip for external providers)
+            if user_api_key:
+                if not user_api_key.strip():
+                    raise ValueError("Invalid or empty API key provided")
+
+                try:
+                    decrypted_key = api_key_manager.decrypt_key(user_api_key)
+                except Exception as e:
+                    raise ValueError(f"Failed to decrypt API key: {str(e)}")
+            else:
+                decrypted_key = None
 
             # Get provider
-            provider = self._get_provider(job.provider, decrypted_key)
+            provider = self._get_provider(job.provider, decrypted_key) if decrypted_key else None
 
             # Generate video
             if job.job_type == "video_generate":
@@ -140,24 +149,35 @@ class VideoService:
         Returns:
             Processed video URL
         """
-        # This is a placeholder for video background removal
-        # Actual implementation would use a service like videobgremover.com
+        import os
+
+        # Check if video background removal service is configured
+        bg_remover_api = os.getenv("VIDEO_BG_REMOVER_API_URL")
+        bg_remover_key = os.getenv("VIDEO_BG_REMOVER_API_KEY")
+
+        if not bg_remover_api:
+            raise ValueError(
+                "Video background removal service not configured. "
+                "Please set VIDEO_BG_REMOVER_API_URL environment variable."
+            )
 
         video_url = params.get("video_url")
         output_bg = params.get("output_background", {})
 
-        # Example API call (adjust based on actual service)
-        async with httpx.AsyncClient() as client:
+        # Call configured API service
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            headers = {}
+            if bg_remover_key:
+                headers["Authorization"] = f"Bearer {bg_remover_key}"
+
             response = await client.post(
-                "https://api.videobgremover.com/v1/remove",
+                bg_remover_api,
                 json={
                     "video_url": video_url,
                     "background_type": output_bg.get("type", "transparent"),
                     "background_color": output_bg.get("color"),
                 },
-                headers={
-                    "Authorization": f"Bearer {params.get('api_key', '')}",
-                },
+                headers=headers,
             )
             response.raise_for_status()
             result = response.json()
@@ -193,8 +213,18 @@ class VideoService:
 
     def _get_provider(self, provider_name: str, api_key: str):
         """Get provider instance."""
+        import json
+
         if provider_name == "veo":
-            return VeoProvider(api_key)
+            # For Veo, API key should be JSON with {api_key, project_id}
+            try:
+                key_data = json.loads(api_key)
+                return VeoProvider(
+                    api_key=key_data.get("api_key", ""),
+                    project_id=key_data.get("project_id")
+                )
+            except (json.JSONDecodeError, KeyError):
+                raise ValueError("Veo requires API key in JSON format: {\"api_key\": \"...\", \"project_id\": \"...\"}")
         elif provider_name == "sora":
             return SoraProvider(api_key)
         elif provider_name == "openai":

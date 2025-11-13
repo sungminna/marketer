@@ -15,12 +15,16 @@ class VeoProvider(BaseProvider):
     def __init__(self, api_key: str, project_id: str = None, location: str = "us-central1"):
         """Initialize Veo provider."""
         super().__init__(api_key)
+
+        # project_id is required for Veo
+        if not project_id:
+            raise ValueError("project_id is required for Veo provider")
+
         self.project_id = project_id
         self.location = location
 
         # Initialize Vertex AI
-        if project_id:
-            aiplatform.init(project=project_id, location=location)
+        aiplatform.init(project=project_id, location=location)
 
     async def generate_image(self, params: Dict[str, Any]) -> List[str]:
         """Veo doesn't support image generation."""

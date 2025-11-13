@@ -52,7 +52,7 @@ async def generate_video(
     service = VideoService(db)
 
     # Prepare input params
-    input_params = request.dict()
+    input_params = request.model_dump()
     input_params["resource_type"] = "video"
 
     # Create job
@@ -120,7 +120,7 @@ async def generate_video_from_images(
     service = VideoService(db)
 
     # Prepare input params
-    input_params = request.dict()
+    input_params = request.model_dump()
     input_params["resource_type"] = "video"
 
     # Create job
@@ -170,7 +170,7 @@ async def remove_video_background(
         job_type="video_bg_remove",
         provider="external",
         model="videobgremover",
-        input_params=request.dict(),
+        input_params=request.model_dump(),
     )
 
     # Queue background task

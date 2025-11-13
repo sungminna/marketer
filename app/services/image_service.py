@@ -83,8 +83,14 @@ class ImageService:
             job.status = "processing"
             await self.db.commit()
 
-            # Decrypt API key
-            decrypted_key = api_key_manager.decrypt_key(user_api_key)
+            # Validate and decrypt API key
+            if not user_api_key or not user_api_key.strip():
+                raise ValueError("Invalid or empty API key provided")
+
+            try:
+                decrypted_key = api_key_manager.decrypt_key(user_api_key)
+            except Exception as e:
+                raise ValueError(f"Failed to decrypt API key: {str(e)}")
 
             # Get provider
             provider = self._get_provider(job.provider, decrypted_key)
@@ -166,14 +172,22 @@ class ImageService:
 
     def _get_provider(self, provider_name: str, api_key: str):
         """Get provider instance."""
+        import json
+
         if provider_name == "gemini":
             return GeminiProvider(api_key)
         elif provider_name == "openai":
             return OpenAIProvider(api_key)
         elif provider_name == "imagen":
-            # For Imagen, we need project_id
-            # Assuming it's stored in the same API key field as JSON or separate
-            return ImagenProvider(api_key)
+            # For Imagen, API key should be JSON with {api_key, project_id}
+            try:
+                key_data = json.loads(api_key)
+                return ImagenProvider(
+                    api_key=key_data.get("api_key", ""),
+                    project_id=key_data.get("project_id")
+                )
+            except (json.JSONDecodeError, KeyError):
+                raise ValueError("Imagen requires API key in JSON format: {\"api_key\": \"...\", \"project_id\": \"...\"}")
         else:
             raise ValueError(f"Unsupported provider: {provider_name}")
 

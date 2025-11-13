@@ -54,7 +54,7 @@ async def generate_images(
     service = ImageService(db)
 
     # Prepare input params
-    input_params = request.dict()
+    input_params = request.model_dump()
     input_params["resource_type"] = "image"
 
     # Create job
@@ -120,7 +120,7 @@ async def edit_image(
         job_type="image_edit",
         provider=request.provider,
         model="default",  # Model determined by provider
-        input_params=request.dict(),
+        input_params=request.model_dump(),
     )
 
     # Queue background task
@@ -172,7 +172,7 @@ async def generate_prototype(
     service = ImageService(db)
 
     # Prepare input params
-    input_params = request.dict()
+    input_params = request.model_dump()
     input_params["prompt"] = prompt
     input_params["resource_type"] = "image"
 

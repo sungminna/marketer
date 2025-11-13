@@ -1,5 +1,5 @@
 """Image generation-related Pydantic schemas."""
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, Field
@@ -27,10 +27,10 @@ class ImageConfig(BaseModel):
 class ImageGenerateRequest(BaseModel):
     """Request schema for text-to-image generation."""
 
-    provider: str = Field(..., description="gemini|openai|imagen")
+    provider: Literal["gemini", "openai", "imagen"] = Field(..., description="Provider for image generation")
     model: str = Field(..., description="Model identifier")
-    prompt: str = Field(..., min_length=1, description="Text prompt for image generation")
-    style_preset: Optional[str] = Field(None, description="photoreal|illustration|technical|minimal")
+    prompt: str = Field(..., min_length=1, max_length=2000, description="Text prompt for image generation")
+    style_preset: Optional[Literal["photoreal", "illustration", "technical", "minimal"]] = Field(None, description="Style preset")
     design_tokens: Optional[DesignTokens] = None
     image_config: ImageConfig = Field(default_factory=ImageConfig)
 
@@ -46,9 +46,9 @@ class EditParams(BaseModel):
 class ImageEditRequest(BaseModel):
     """Request schema for image-to-image editing."""
 
-    provider: str = Field(..., description="gemini|openai")
+    provider: Literal["gemini", "openai"] = Field(..., description="Provider for image editing")
     base_image: str = Field(..., description="URL or base64 of original image")
-    edit_type: str = Field(..., description="style_transfer|pose_change|color_adjust|background_replace")
+    edit_type: Literal["style_transfer", "pose_change", "color_adjust", "background_replace"] = Field(..., description="Type of edit")
     reference_image: Optional[str] = Field(None, description="URL or base64 of reference image")
     edit_params: EditParams
     output_config: Optional[ImageConfig] = None
@@ -81,9 +81,9 @@ class PrototypeSpecs(BaseModel):
 class PrototypeGenerateRequest(BaseModel):
     """Request schema for app prototype/icon generation."""
 
-    provider: str = Field(..., description="gemini|openai|imagen")
-    asset_type: str = Field(..., description="app_screen|icon|logo|banner")
-    app_type: Optional[str] = Field("mobile", description="mobile|web|tablet")
+    provider: Literal["gemini", "openai", "imagen"] = Field(..., description="Provider for prototype generation")
+    asset_type: Literal["app_screen", "icon", "logo", "banner"] = Field(..., description="Type of asset to generate")
+    app_type: Optional[Literal["mobile", "web", "tablet"]] = Field("mobile", description="Application type")
     brand_guidelines: BrandGuidelines
     content: Optional[PrototypeContent] = None
     specifications: Optional[PrototypeSpecs] = None
