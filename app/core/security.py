@@ -14,12 +14,20 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    # Pre-hash the password with SHA256 to avoid bcrypt's 72-byte limitation
+    prehashed = hashlib.sha256(plain_password.encode()).hexdigest()
+    return pwd_context.verify(prehashed, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    """Hash a password."""
-    return pwd_context.hash(password)
+    """Hash a password for storage.
+
+    Pre-hashes the password with SHA256 before bcrypt hashing to avoid
+    bcrypt's 72-byte limitation while maintaining security.
+    """
+    # Pre-hash the password with SHA256 to avoid bcrypt's 72-byte limitation
+    prehashed = hashlib.sha256(password.encode()).hexdigest()
+    return pwd_context.hash(prehashed)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
