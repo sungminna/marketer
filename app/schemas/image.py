@@ -113,3 +113,7 @@ class JobStatusResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# Alias for compatibility
+ImageJobResponse = JobStatusResponse
