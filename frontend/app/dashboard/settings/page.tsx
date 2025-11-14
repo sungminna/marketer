@@ -205,7 +205,7 @@ export default function SettingsPage() {
                 </p>
               ) : apiKeys && apiKeys.length > 0 ? (
                 <div className="space-y-3">
-                  {apiKeys.map((key) => (
+                  {apiKeys.map((key: any) => (
                     <div
                       key={key.id}
                       className="flex items-center justify-between p-4 border rounded-lg"
