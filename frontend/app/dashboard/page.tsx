@@ -167,7 +167,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentJobs?.items.map((job) => (
+              {recentJobs?.items.map((job: any) => (
                 <div key={job.id} className="flex items-center justify-between border-b pb-3 last:border-0">
                   <div className="flex-1">
                     <p className="text-sm font-medium truncate">{job.prompt || job.job_type}</p>

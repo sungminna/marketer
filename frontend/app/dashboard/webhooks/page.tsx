@@ -264,7 +264,7 @@ export default function WebhooksPage() {
               </p>
             ) : webhooks && webhooks.length > 0 ? (
               <div className="space-y-3">
-                {webhooks.map((webhook) => (
+                {webhooks.map((webhook: any) => (
                   <div
                     key={webhook.id}
                     className={`flex items-start justify-between p-4 border rounded-lg cursor-pointer transition-colors ${
@@ -284,7 +284,7 @@ export default function WebhooksPage() {
                           </Badge>
                         </div>
                         <div className="flex flex-wrap gap-1 mb-2">
-                          {webhook.events.map((event) => (
+                          {webhook.events.map((event: any) => (
                             <Badge key={event} variant="outline" className="text-xs">
                               {event}
                             </Badge>
@@ -357,7 +357,7 @@ export default function WebhooksPage() {
               </p>
             ) : deliveries?.items && deliveries.items.length > 0 ? (
               <div className="space-y-3">
-                {deliveries.items.map((delivery) => (
+                {deliveries.items.map((delivery: any) => (
                   <div
                     key={delivery.id}
                     className="flex items-start justify-between p-3 border rounded-lg"

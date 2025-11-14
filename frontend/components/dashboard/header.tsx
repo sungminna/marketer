@@ -7,10 +7,10 @@ import { LogOut, User } from 'lucide-react'
 
 export function Header() {
   const router = useRouter()
-  const { user, clearAuth } = useAuthStore()
+  const { user, logout } = useAuthStore()
 
   const handleLogout = () => {
-    clearAuth()
+    logout()
     router.push('/login')
   }
 

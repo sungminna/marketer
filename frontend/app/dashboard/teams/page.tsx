@@ -178,7 +178,7 @@ export default function TeamsPage() {
 
       <Tabs value={selectedTeam || teams?.[0]?.id || ''} onValueChange={setSelectedTeam}>
         <TabsList>
-          {teams?.map((team) => (
+          {teams?.map((team: any) => (
             <TabsTrigger key={team.id} value={team.id}>
               {team.name}
             </TabsTrigger>
@@ -186,7 +186,7 @@ export default function TeamsPage() {
           {(!teams || teams.length === 0) && <TabsTrigger value="">No Teams</TabsTrigger>}
         </TabsList>
 
-        {teams?.map((team) => (
+        {teams?.map((team: any) => (
           <TabsContent key={team.id} value={team.id} className="mt-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -276,7 +276,7 @@ export default function TeamsPage() {
                   </p>
                 ) : members && members.length > 0 ? (
                   <div className="space-y-3">
-                    {members.map((member) => (
+                    {members.map((member: any) => (
                       <div
                         key={member.id}
                         className="flex items-center justify-between p-4 border rounded-lg"

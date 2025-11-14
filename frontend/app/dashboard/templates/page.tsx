@@ -239,7 +239,7 @@ export default function TemplatesPage() {
             </p>
           ) : templates?.items && templates.items.length > 0 ? (
             <div className="space-y-3">
-              {templates.items.map((template) => (
+              {templates.items.map((template: any) => (
                 <div
                   key={template.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"

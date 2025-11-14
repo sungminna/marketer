@@ -137,7 +137,7 @@ export default function BatchesPage() {
               </p>
             ) : batches?.items && batches.items.length > 0 ? (
               <div className="space-y-3">
-                {batches.items.map((batch) => (
+                {batches.items.map((batch: any) => (
                   <div
                     key={batch.id}
                     className={`flex flex-col p-4 border rounded-lg cursor-pointer transition-colors ${
@@ -263,7 +263,7 @@ export default function BatchesPage() {
               </p>
             ) : batchJobs?.items && batchJobs.items.length > 0 ? (
               <div className="space-y-3">
-                {batchJobs.items.map((job) => (
+                {batchJobs.items.map((job: any) => (
                   <div
                     key={job.id}
                     className="flex items-start justify-between p-3 border rounded-lg"

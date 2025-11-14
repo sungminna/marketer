@@ -99,12 +99,12 @@ export default function AnalyticsPage() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={(entry) => `${entry.provider}: $${entry.total_cost.toFixed(2)}`}
+                    label={(entry: any) => `${entry.provider}: $${entry.total_cost.toFixed(2)}`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="total_cost"
                   >
-                    {costBreakdown.map((entry, index) => (
+                    {costBreakdown.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -193,7 +193,7 @@ export default function AnalyticsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {costBreakdown.map((item, index) => (
+                  {costBreakdown.map((item: any, index: number) => (
                     <tr key={index} className="border-b last:border-0">
                       <td className="py-3 px-4">{item.provider}</td>
                       <td className="py-3 px-4 text-sm text-muted-foreground">

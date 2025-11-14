@@ -64,7 +64,7 @@ export default function JobsPage() {
                   </p>
                 ) : jobs?.items && jobs.items.length > 0 ? (
                   <div className="space-y-3">
-                    {jobs.items.map((job) => (
+                    {jobs.items.map((job: any) => (
                       <div
                         key={job.id}
                         className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"
@@ -154,7 +154,7 @@ export default function JobsPage() {
                   </p>
                 ) : jobs?.items && jobs.items.length > 0 ? (
                   <div className="space-y-3">
-                    {jobs.items.map((job) => (
+                    {jobs.items.map((job: any) => (
                       <div
                         key={job.id}
                         className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"
