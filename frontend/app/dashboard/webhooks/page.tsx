@@ -11,7 +11,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Trash2, Webhook as WebhookIcon, CheckCircle, XCircle, Clock } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Plus, Trash2, Webhook as WebhookIcon, CheckCircle, XCircle, Clock, Edit } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 const webhookSchema = z.object({
@@ -34,6 +41,8 @@ export default function WebhooksPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [selectedWebhook, setSelectedWebhook] = useState<string | null>(null)
   const [selectedEvents, setSelectedEvents] = useState<string[]>(['job.completed'])
+  const [editingWebhook, setEditingWebhook] = useState<any>(null)
+  const [editingEvents, setEditingEvents] = useState<string[]>([])
 
   const { data: webhooks, isLoading } = useQuery({
     queryKey: ['webhooks'],
@@ -55,6 +64,16 @@ export default function WebhooksPage() {
     resolver: zodResolver(webhookSchema),
   })
 
+  const {
+    register: registerEdit,
+    handleSubmit: handleSubmitEdit,
+    reset: resetEdit,
+    setValue: setEditValue,
+    formState: { errors: editErrors },
+  } = useForm<WebhookFormData>({
+    resolver: zodResolver(webhookSchema),
+  })
+
   const createMutation = useMutation({
     mutationFn: (data: WebhookFormData) =>
       apiClient.createWebhook({
@@ -66,6 +85,20 @@ export default function WebhooksPage() {
       setShowCreate(false)
       setSelectedEvents(['job.completed'])
       reset()
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: WebhookFormData }) =>
+      apiClient.updateWebhook(id, {
+        ...data,
+        events: editingEvents,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['webhooks'] })
+      setEditingWebhook(null)
+      setEditingEvents([])
+      resetEdit()
     },
   })
 
@@ -84,12 +117,39 @@ export default function WebhooksPage() {
     })
   }
 
+  const onSubmitEdit = (data: Omit<WebhookFormData, 'events'>) => {
+    if (editingWebhook) {
+      updateMutation.mutate({
+        id: editingWebhook.id,
+        data: {
+          ...data,
+          events: editingEvents,
+        },
+      })
+    }
+  }
+
   const toggleEvent = (event: string) => {
     setSelectedEvents((prev) =>
       prev.includes(event)
         ? prev.filter((e) => e !== event)
         : [...prev, event]
     )
+  }
+
+  const toggleEditEvent = (event: string) => {
+    setEditingEvents((prev) =>
+      prev.includes(event)
+        ? prev.filter((e) => e !== event)
+        : [...prev, event]
+    )
+  }
+
+  const handleEditWebhook = (webhook: any) => {
+    setEditingWebhook(webhook)
+    setEditValue('url', webhook.url)
+    setEditValue('secret', webhook.secret || '')
+    setEditingEvents(webhook.events || [])
   }
 
   return (
@@ -235,17 +295,29 @@ export default function WebhooksPage() {
                         </p>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        deleteMutation.mutate(webhook.id)
-                      }}
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEditWebhook(webhook)
+                        }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          deleteMutation.mutate(webhook.id)
+                        }}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -335,6 +407,89 @@ export default function WebhooksPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Webhook Dialog */}
+      <Dialog open={!!editingWebhook} onOpenChange={(open) => !open && setEditingWebhook(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Webhook</DialogTitle>
+            <DialogDescription>
+              Update your webhook configuration
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmitEdit(onSubmitEdit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-url">Webhook URL</Label>
+              <Input
+                id="edit-url"
+                type="url"
+                placeholder="https://api.example.com/webhooks"
+                {...registerEdit('url')}
+              />
+              {editErrors.url && (
+                <p className="text-sm text-red-500">{editErrors.url.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Events to Subscribe</Label>
+              <div className="space-y-2">
+                {availableEvents.map((event) => (
+                  <div key={event} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`edit-${event}`}
+                      checked={editingEvents.includes(event)}
+                      onChange={() => toggleEditEvent(event)}
+                      className="rounded"
+                    />
+                    <Label htmlFor={`edit-${event}`} className="font-normal">
+                      {event}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-secret">Secret (Optional)</Label>
+              <Input
+                id="edit-secret"
+                type="password"
+                placeholder="Your webhook secret"
+                {...registerEdit('secret')}
+              />
+              <p className="text-xs text-muted-foreground">
+                Used to verify webhook authenticity
+              </p>
+            </div>
+
+            <div className="flex space-x-2">
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? 'Updating...' : 'Update Webhook'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setEditingWebhook(null)
+                  setEditingEvents([])
+                  resetEdit()
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+
+            {updateMutation.isError && (
+              <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+                {(updateMutation.error as any)?.response?.data?.detail ||
+                  'Failed to update webhook. Please try again.'}
+              </div>
+            )}
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

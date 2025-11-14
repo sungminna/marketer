@@ -1,17 +1,40 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { apiClient } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Layers, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Layers, CheckCircle, XCircle, Clock, Loader2, Plus } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
+const batchSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  description: z.string().optional(),
+  jobsJson: z.string().min(1, 'Jobs configuration is required'),
+})
+
+type BatchFormData = z.infer<typeof batchSchema>
+
 export default function BatchesPage() {
+  const queryClient = useQueryClient()
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedBatch, setSelectedBatch] = useState<string | null>(null)
+  const [showCreate, setShowCreate] = useState(false)
 
   const { data: batches, isLoading: batchesLoading } = useQuery({
     queryKey: ['batches', currentPage],
@@ -23,6 +46,41 @@ export default function BatchesPage() {
     queryFn: () => apiClient.getBatchJobs(selectedBatch!, 1, 20),
     enabled: !!selectedBatch,
   })
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<BatchFormData>({
+    resolver: zodResolver(batchSchema),
+  })
+
+  const createMutation = useMutation({
+    mutationFn: (data: BatchFormData) => {
+      let jobs
+      try {
+        jobs = JSON.parse(data.jobsJson)
+      } catch (error) {
+        throw new Error('Invalid JSON format for jobs')
+      }
+
+      return apiClient.createBatch({
+        name: data.name,
+        description: data.description,
+        jobs,
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['batches'] })
+      setShowCreate(false)
+      reset()
+    },
+  })
+
+  const onSubmit = (data: BatchFormData) => {
+    createMutation.mutate(data)
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -59,6 +117,10 @@ export default function BatchesPage() {
             Manage and monitor your batch generation jobs
           </p>
         </div>
+        <Button onClick={() => setShowCreate(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Create Batch
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -273,6 +335,109 @@ export default function BatchesPage() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Create Batch Dialog */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create Batch</DialogTitle>
+            <DialogDescription>
+              Create a batch of generation jobs to process simultaneously
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Batch Name</Label>
+              <Input
+                id="name"
+                placeholder="My Batch Job"
+                {...register('name')}
+              />
+              {errors.name && (
+                <p className="text-sm text-red-500">{errors.name.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description (Optional)</Label>
+              <Input
+                id="description"
+                placeholder="Description of this batch"
+                {...register('description')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="jobsJson">Jobs Configuration (JSON)</Label>
+              <Textarea
+                id="jobsJson"
+                placeholder='[{"job_type": "image", "provider": "gemini", "model": "gemini-2.5-flash-image", "prompt": "A beautiful sunset"}, ...]'
+                rows={10}
+                className="font-mono text-sm"
+                {...register('jobsJson')}
+              />
+              {errors.jobsJson && (
+                <p className="text-sm text-red-500">{errors.jobsJson.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Provide an array of job configurations in JSON format. Each job should include:
+                job_type, provider, model, prompt, and any additional configuration.
+              </p>
+            </div>
+
+            <details className="text-sm">
+              <summary className="cursor-pointer font-medium mb-2">Example JSON</summary>
+              <pre className="bg-secondary p-3 rounded-md overflow-x-auto text-xs">
+{`[
+  {
+    "job_type": "image",
+    "provider": "gemini",
+    "model": "gemini-2.5-flash-image",
+    "prompt": "A sunset over mountains",
+    "image_config": {
+      "aspect_ratio": "16:9"
+    }
+  },
+  {
+    "job_type": "video",
+    "provider": "veo",
+    "model": "veo-3.1-fast-generate-preview-001",
+    "prompt": "A product showcase video",
+    "video_config": {
+      "length": 8,
+      "resolution": "720p"
+    }
+  }
+]`}
+              </pre>
+            </details>
+
+            <div className="flex space-x-2">
+              <Button type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? 'Creating...' : 'Create Batch'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowCreate(false)
+                  reset()
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+
+            {createMutation.isError && (
+              <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+                {(createMutation.error as any)?.message ||
+                  (createMutation.error as any)?.response?.data?.detail ||
+                  'Failed to create batch. Please check your JSON format and try again.'}
+              </div>
+            )}
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
